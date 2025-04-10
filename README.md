@@ -240,7 +240,7 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 
 #### Random Forest Classifier
 
-- We manually performed 4-fold cross-validation for hyperparameter tuning to address class imbalance.
+- We perform 4-fold stratified cross-validation for hyperparameter tuning to address class imbalance.
 - Tuned parameters included:  
   - `numTrees`: [50, 60, ..., 120]  
   - `maxDepth`: [5, 10, 15]  
@@ -304,5 +304,21 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
   
 > A more practical short-term solution could be deploying a **dashboard** highlighting high-risk behaviors (e.g., speeding, harsh braking, overdue inspections) rather than deploying a low-confidence predictive model.
 
-## 5. Challenges and Project Limitations: 
+## V. Challenges and Project Limitations: 
 
+Despite our efforts to engineer meaningful features and train predictive models, several challenges and limitations affected the scope and reliability of the project:
+
+- **Incomplete and inconsistent insurance claims data**  
+  Some insurance records were missing driver names or did not match any names from the Motive platform. In addition, the claims data often lacked vehicle information, which is critical since drivers may operate multiple vehicles in a single day. These gaps made it difficult to accurately link insurance-reported accidents with internal trip records.
+
+- **Driver login gaps and potential misattribution**  
+  Before starting their trips, drivers sometimes failed to log into the Motive system. While the system still captured the trip data, the lack of a logged-in user meant that the associated `driver_id` was either missing or incorrect. This issue, combined with inconsistent or unreliable accident dates in the insurance claims data, made accurate matching difficult. To address this, we applied a fallback approach: when a valid `driver_id` was available, we matched each insurance-reported accident to the closest trip (by date) within a 30-day window starting from the reported accident date in the Motive records.
+
+- **Missing demographic information for some drivers**  
+  Due to the login inconsistencies, many driver IDs lacked basic demographic information such as age or employment start date. As a result, we excluded these fields from our feature set and used each driver’s first recorded trip date as a proxy for driving tenure.
+
+- **Limited inspection data quality**  
+  While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only include the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
+
+- **Lack of trip-level location granularity**  
+  We did not have access to start and end coordinates for individual trips. This limited our ability to match each trip precisely to weather conditions. Since weather can vary significantly even within the same city, we worked around this limitation by aggregating precipitation data within a 40-mile radius of the driver’s service site.
