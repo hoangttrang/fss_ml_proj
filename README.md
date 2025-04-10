@@ -58,7 +58,7 @@ Extras notebook here:
 ## II. Data Overview
 
 <p align="center">
-  <img src="data_source.jpg" alt="Data Source Overview" width="600"/>
+  <img src="README_imgs/data_source.jpg" alt="Data Source Overview" width="600"/>
 </p>
 
 This project leverages multiple data sources to provide a comprehensive view of driving conditions, driver behavior, and environmental factors. Below is a concise summary of each dataset:
@@ -110,8 +110,8 @@ By saving intermediate outputs after each step, we avoid repetitive heavy-lift t
 ### 1. Data Processing 
 
 <p align="center">
-  <img src="external_data_processing.jpg" alt="External Data Processing" width="45%" style="margin-right: 10px;"/>
-  <img src="internal_data_processing.jpg" alt="Internal Data Processing" width="45%"/>
+  <img src="README_imgs/external_data_processing.jpg" alt="External Data Processing" width="45%" style="margin-right: 10px;"/>
+  <img src="README_imgs/internal_data_processing.jpg" alt="Internal Data Processing" width="45%"/>
 </p>
 
 <p align="center">
