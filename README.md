@@ -1,13 +1,75 @@
 # Car Accident Prediction for Fleet Management for FussionSite 
 
 ## I. Background and motivation: 
-FusionSites Services is a waste management service that relies on a large fleet of specialized vehicles for efficient waste collection and disposal. Ensuring fleet safety and on-time operations is paramount to maintaining regulatory compliance and averting reputational risks.
+FusionSite Services, a waste management company, operates a large fleet of over 800 specialized vehicles to ensure efficient waste collection and disposal. Fleet safety and timely operations are critical to maintaining regulatory compliance and avoiding reputational risks. Despite the company’s impressive growth rate of 120% per year, their previous telematics system failed to deliver the insights needed to improve safety, reduce costs, or streamline operations. With limited data, FusionSite faced higher risks and unnecessary expenses, impeding their ability to scale effectively. As their fleet grew, it became increasingly difficult to maintain uniform performance and consistency across regions, business units, and drivers.
 
-This project addresses the critical goal of predicting and preventing vehicle accidents. By integrating various data sources—driver behavior, state crash reports, and weather data—FusionSites aims to create a predictive framework that identifies high-risk locations and times for potential accidents, thereby optimizing fleet routing, driver safety, and overall service reliability.
+In response, FusionSite implemented Motive’s AI-powered dual-facing Dashcams to enhance safety and support their growth. According to Ryan Ennis, Head of Risk and IT at FusionSite, the company has seen an 89% reduction in unsafe events within a year. Now, FusionSite is looking to leverage the data collected through these AI Dashcams to standardize safety and operations across newly acquired companies.
 
-This project goal is to predict car accident using binary classification using drivers' driving patterns, their behaviors, state crash data and weather data.  
+The project aims to address the critical issue of predicting and preventing vehicle accidents. By integrating data from driver behavior, state crash reports, and weather conditions, FusionSite plans to develop a predictive framework that identifies high-risk locations and times, enhancing fleet routing, driver safety, and overall service reliability.
 
-## Notebook Description Overview 
+The specific objective is to use binary classification to predict accidents based on driving patterns, driver behavior, crash data, and weather conditions.
+
+
+## II. Data Overview
+
+<p align="center">
+  <img src="README_imgs/data_source.jpg" alt="Data Source Overview" width="600"/>
+</p>
+
+This project leverages multiple data sources to provide a comprehensive view of driving conditions, driver behavior, and environmental factors. Below is a concise summary of each dataset:
+
+A. Motive Data
+ - Purpose: Track driver behavior and vehicle conditions (hazard event types, driving periods, idle events, car inspections).
+ - Usage: Correlate risky driving behaviors with crash events and generate internal risk metrics for drivers and vehicles.
+ 
+B. Insurance Claims Data
+ - Description: Contains records of insurance claims including the date, time, location, and driver information for accidents involving FusionSites’ fleet.
+ - Usage:
+     - Identify and confirm actual accidents among all recorded trips.
+     - Map claims back to Motive data to pinpoint which specific driving periods or events correspond to confirmed accidents.
+     
+C. State Crash Data (FMCSA’s MCMIS)
+ - Source: Federal Motor Carrier Safety Administration (FMCSA).
+ - Description: Contains crash records (fatalities, injuries, vehicles involved) for trucks and buses reported by states.
+ - Time Range: 2023–2025 (project scope).
+ - Usage: Compute monthly, county-level crash statistics (e.g., number of crashes, fatalities, injuries). These aggregated statistics serve as ground truth for accident frequency trends.
+ 
+D. Precipitation Data (PRISM)
+ - Source: PRISM Climate Group at Oregon State University.
+ - Time Range: Daily precipitation data from January 1, 2023 to January 31, 2025.
+ - Spatial Resolution: 4km.
+ - Usage: Incorporate weather context (especially precipitation) into accident risk modeling.
+ - Note: Data is “stable,” “provisional,” or “early results” depending on recency.
+
+F. ZIP Code & Geographic Data
+ - 2020 Census 5-Digit ZIP Code Tabulation Area (ZCTA5) Shapefiles
+     - Source: U.S. Census Bureau TIGER/Line series, updated January 27, 2024.
+     - Usage: Match accident records and precipitation data to ZIP codes and counties for location-based analyses.
+ - US Cities/States Data
+     - Usage: Geospatial referencing and consistent location naming across datasets.
+
+## III. Tool& Infrastructure
+### Core Technologies 
+- Azure Databricks: Used for interactive analytics and distributed data processing on the Azure platform.
+
+
+
+- Google Cloud Dataproc: Provides a managed Hadoop and Spark cluster environment for large-scale data processing.
+- HDFS (Hadoop Distributed File System): Facilitates storage of large datasets in a distributed manner, enabling efficient parallel operations.
+- Spark: Employed for data parallelization, feature engineering, and large-scale model training.
+### General WorkFlow: 
+1. Data storage in HDFS  
+   After data cleaning and aggregation, we store both internal (FusionSites data) and external data in HDFS. While this increases storage needs, it prevents re-running heavy computations in subsequent steps.
+2. Feature engineering in a distributed environment  
+   We merge cleaned datasets in HDFS and use Spark on Databricks or Dataproc for parallel feature engineering. This approach handles large data volumes efficiently and shortens processing times.
+3. Model training with Spark  
+   We create train and test sets in HDFS and leverage Spark’s distributed ML libraries. Databricks or Dataproc resources scale on demand, keeping training both efficient and cost-effective.
+4. Python for final model execution  
+   Final model training and tuning run in Python scripts to reduce notebook overhead. This approach simplifies automation and keeps iterative experiments efficient.
+By saving intermediate outputs after each step, we avoid repetitive heavy-lift transformations, preserving data lineage and supporting iterative experimentation in a production-scale environment.
+
+
+## IV, Repository Structure 
 ### A. Motive EDA and Data Processing notebooks
 - **motive_basic_eda.ipynb**
    - Purpose: This conduct very basic exploratory data analysis (like statistic summary, variables distributions) on Motive data on the raw data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide to use 
@@ -55,58 +117,8 @@ Extras notebook here:
 - Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT) and Random Forest (RF). They apply stratified cross-validation to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.  
 - Outcome: Tuned models with evaluation results based on test performance.
 
-## II. Data Overview
 
-<p align="center">
-  <img src="README_imgs/data_source.jpg" alt="Data Source Overview" width="600"/>
-</p>
-
-This project leverages multiple data sources to provide a comprehensive view of driving conditions, driver behavior, and environmental factors. Below is a concise summary of each dataset:
-A. Motive Data
-    - Purpose: Track driver behavior and vehicle conditions (hazard event types, driving periods, idle events, car inspections).
-    - Usage: Correlate risky driving behaviors with crash events and generate internal risk metrics for drivers and vehicles.
-B. Insurance Claims Data
-    - Description: Contains records of insurance claims including the date, time, location, and driver information for accidents involving FusionSites’ fleet.
-    - Usage:
-        - Identify and confirm actual accidents among all recorded trips.
-        - Map claims back to Motive data to pinpoint which specific driving periods or events correspond to confirmed accidents.
-C. State Crash Data (FMCSA’s MCMIS)
-    - Source: Federal Motor Carrier Safety Administration (FMCSA).
-    - Description: Contains crash records (fatalities, injuries, vehicles involved) for trucks and buses reported by states.
-    - Time Range: 2023–2025 (project scope).
-    - Usage: Compute monthly, county-level crash statistics (e.g., number of crashes, fatalities, injuries). These aggregated statistics serve as ground truth for accident frequency trends.
-D. Precipitation Data (PRISM)
-    - Source: PRISM Climate Group at Oregon State University.
-    - Time Range: Daily precipitation data from January 1, 2023 to January 31, 2025.
-    - Spatial Resolution: 4km.
-    - Usage: Incorporate weather context (especially precipitation) into accident risk modeling.
-    - Note: Data is “stable,” “provisional,” or “early results” depending on recency.
-
-F. ZIP Code & Geographic Data
-    - 2020 Census 5-Digit ZIP Code Tabulation Area (ZCTA5) Shapefiles
-        - Source: U.S. Census Bureau TIGER/Line series, updated January 27, 2024.
-        - Usage: Match accident records and precipitation data to ZIP codes and counties for location-based analyses.
-    - US Cities/States Data
-        - Usage: Geospatial referencing and consistent location naming across datasets.
-
-## III. Tool& Infrastructure
-### Core Technologies 
-- Azure Databricks: Used for interactive analytics and distributed data processing on the Azure platform.
-- Google Cloud Dataproc: Provides a managed Hadoop and Spark cluster environment for large-scale data processing.
-- HDFS (Hadoop Distributed File System): Facilitates storage of large datasets in a distributed manner, enabling efficient parallel operations.
-- Spark: Employed for data parallelization, feature engineering, and large-scale model training.
-### General WorkFlow: 
-1. Data storage in HDFS  
-   After data cleaning and aggregation, we store both internal (FusionSites data) and external data in HDFS. While this increases storage needs, it prevents re-running heavy computations in subsequent steps.
-2. Feature engineering in a distributed environment  
-   We merge cleaned datasets in HDFS and use Spark on Databricks or Dataproc for parallel feature engineering. This approach handles large data volumes efficiently and shortens processing times.
-3. Model training with Spark  
-   We create train and test sets in HDFS and leverage Spark’s distributed ML libraries. Databricks or Dataproc resources scale on demand, keeping training both efficient and cost-effective.
-4. Python for final model execution  
-   Final model training and tuning run in Python scripts to reduce notebook overhead. This approach simplifies automation and keeps iterative experiments efficient.
-By saving intermediate outputs after each step, we avoid repetitive heavy-lift transformations, preserving data lineage and supporting iterative experimentation in a production-scale environment.
-
-## IV. Methodology
+## V. Methodology
 ### 1. Data Processing 
 
 <p align="center">
@@ -304,7 +316,7 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
   
 > A more practical short-term solution could be deploying a **dashboard** highlighting high-risk behaviors (e.g., speeding, harsh braking, overdue inspections) rather than deploying a low-confidence predictive model.
 
-## V. Challenges and Project Limitations: 
+## VI. Challenges and Project Limitations: 
 
 Despite our efforts to engineer meaningful features and train predictive models, several challenges and limitations affected the scope and reliability of the project:
 
