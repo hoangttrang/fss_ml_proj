@@ -327,9 +327,9 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
     -   `max_depth`: \[3, 15\]\
     -   `step_size`: \[0.05, 3\]\
     -   `subsample_rate`: \[0.5, 1.0\]\
-    -   `min_instances_per_node`: \[1, 20\]\
+    -   `min_instances_per_node`: \[1, 20\]
 
-<img src="assets/optimization_history.png" alt="Optimization History" width="30%"/>
+<img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
 -  The inital 30 trials with all of the featues took 2 hr and 45 min to complete. The best AUC on the validation set was .7429 with a max_depth of 3, step_size of 0.228 subsample_rate of 0.884 and min_instances_per_node of 10. 
 -  After selecting the top 5 models via stratified validation, we performed feature importance filtering, dropping 85 non-informative features.
@@ -435,4 +435,4 @@ High priority areas for contributions include:
 
 ## Contact
 
-For any questions or feedback, please reach out to Isabel Arvelo (isabel.c.arvelo@vanderbilt.edu) or Trang Hoang. 
+For any questions or feedback, please reach out to Isabel Arvelo (isabel.c.arvelo@vanderbilt.edu) or Trang Hoang (trang.t.hoang.1@Vanderbilt.Edu). 
