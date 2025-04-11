@@ -257,17 +257,32 @@ Feature engineering is conducted separately on internal and external datasets to
 
 The following tables are cleaned, transformed, and joined by `driver_id`, `vehicle_id`, and `trip_date`:
 
-**Drivers Trips Information** - Includes trip frequency, average speed, distance, recency, and rolling trip stats: - `trip_date_distance`, `trip_date_minutes`, `trip_date_avg_speed_mph` - Rolling features like `rolling_7trip_avg_speed_mph`, `rolling_30day_total_distance` - Trip behavior change metrics: `change_in_distance`, `change_in_minutes`
+**Drivers Trips Information** 
 
-**Hazard Event Information for each trip** - Event-based features for each trip: - Total and type-specific event counts (e.g., `speeding`, `drowsiness`, `crash`, roughly 15+ different hazard events from Motive) - Rolling 7/15/30-day sums per event type - Speeding severity breakdowns (`low`, `mid`, `high`) and their respective rolling stats - Ratios per distance, minutes, and events to normalize behavior - Coaching and review metrics (e.g., `prev_review_rate_per_km`)
+- Includes trip frequency, average speed, distance, recency, and rolling trip stats: - `trip_date_distance`, `trip_date_minutes`, `trip_date_avg_speed_mph` 
+- Rolling features like `rolling_7trip_avg_speed_mph`, `rolling_30day_total_distance`
+- Trip behavior change metrics: `change_in_distance`, `change_in_minutes`
 
-**Vehicle Inspection per each trip date** - Inspection-based features for each vehicle-trip: - Cumulative inspection counts and issue rates - Days since last inspection - Rolling inspection/activity ratios across previous 7/15/30 trips
+**Hazard Event Information for each trip**
+
+- Event-based features for each trip: - Total and type-specific event counts (e.g., `speeding`, `drowsiness`, `crash`, roughly 15+ different hazard events from Motive) 
+- Rolling 7/15/30-day sums per event type - Speeding severity breakdowns (`low`, `mid`, `high`) and their respective rolling stats 
+- Ratios per distance, minutes, and events to normalize behavior - Coaching and review metrics (e.g., `prev_review_rate_per_km`)
+
+**Vehicle Inspection per each trip date** 
+
+- Inspection-based features for each vehicle-trip: 
+- Cumulative inspection counts and issue rates 
+- Days since last inspection 
+- Rolling inspection/activity ratios across previous 7/15/30 trips
 
 **Driver Idling Events**
 
-- Idle behavior for each trip: `idle_event_count_per_trip`, `avg_idle_duration_per_trip`, `total_idle_minutes_per_trip` - Rolling 7, 15, 30 -trip averages for idle count, duration, and minutes
+- Idle behavior for each trip: `idle_event_count_per_trip`, `avg_idle_duration_per_trip`, `total_idle_minutes_per_trip` 
+- Rolling 7, 15, 30 -trip averages for idle count, duration, and minutes
 
-**Trips and corresponding sites**: This is used to understand where would this trip dispatched from, allowing to mapped with weather data within that region - Geographic link between trips and site location: - `zipcode`, `motive_group_id` for mapping driver behavior to site-level risk
+**Trips and corresponding sites**: This is used to understand where would this trip dispatched from, allowing to mapped with weather data within that region - Geographic link between trips and site location: 
+    - `zipcode`, `motive_group_id` for mapping driver behavior to site-level risk
 
 These table are going to be joined together with following shared keys `driver_id`, `vehicle_id`, `trip_date`, and `group_id`.
 
@@ -347,7 +362,7 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 -   Tuned parameters included:
     -   `layers`: [num_features, 10, 2], [num_features, 16, 8, 2]
     -   `stepSize`: [0.001, 0.01, 0.1]
-- The initial hyperparameter tuning across these six parameter configurations took 3h 18 min. All of the cross validation AUC scores round to 0.50. We could not use a weight column and using a weighted loss function would have required a custom loss function, so the model was not able to learn anything useful.
+- The initial hyperparameter tuning across these six parameter configurations took 3h 18 min. All of the cross validation AUC scores round to 0.50. We could not use a weight column and using a weighted loss function would have required a custom loss function, so the model was not able to learn anything useful. We also included a another training version with early stopper which only tooks around 1 hour 30 minutes to find the best parameters
 - Training the final model with the best set of hyperparameters took 1 minute. 
 
 ### 5. Model Performance on Train Data
@@ -397,7 +412,7 @@ These are the results of our models given the whole train data
 -   **AUC**: 0.830
 -   **AUPRC**: 0.0491
 -   **Precision**: 0.9980
--   **Recall**: 0.9984
+-   **Recall**: 0.9985
 -   **True Positive Rate (accidents only)**: 0.0615
 -   **False Positive Rate**: 4.196
 -   **Positive Predictive Value (accidents only)**:  0.6956
@@ -460,13 +475,13 @@ These are the results of our models given the whole train data
 
 **With Early Stopping**
 -   **Inference Time**:
--   **AUC**: [FILL IN]
--   **AUPRC**: [FILL IN]
--   **Precision** [FILL IN]
--   **Recall** [FILL IN]
--   **True Positive Rate (accidents only)**: [FILL IN]
--   **False Positive Rate**: [FILL IN]
--   **Positive Predictive Value (accidents only)**: [FILL IN]
+-   **AUC**: 0.4563
+-   **AUPRC**: 0.0024
+-   **Precision**  0.9952
+-   **Recall** 0.9975
+-   **True Positive Rate (accidents only)**: 0
+-   **False Positive Rate**: 4.42e^-5
+-   **Positive Predictive Value (accidents only)**: 0
 
 <img src="assets/mlp_test_performance_es.png" alt="MLP - Performance on Test Data (no early stopping)" width="60%"/>
 
