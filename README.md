@@ -329,12 +329,20 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
     -   `subsample_rate`: \[0.5, 1.0\]\
     -   `min_instances_per_node`: \[1, 20\]
 
+### Multilayer Perceptron Classifier
+
+- Hyperparameter tuninf was performed using the same train/val split as above with a Grid Search 
+-   Tuned parameters included:
+    -   `layers`: \[54, 10, 2], [54, , 16, 8, 2]\
+    -   `stepSize`: \[0.001, 0.01, 0.1\]\
+
 <img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
 -  The inital 30 trials with all of the featues took 2 hr and 45 min to complete. The best AUC on the validation set was .7429 with a max_depth of 3, step_size of 0.228 subsample_rate of 0.884 and min_instances_per_node of 10. 
--  After selecting the top 5 models via stratified validation, we performed feature importance filtering, dropping 85 non-informative features.
+-  We then took the best performing parameters and ran cross validation on the training set to get a better estimate of the model performance and make sure the best parameters were not overfitting to the validation set. This took 42 minutes. 
+- After selecting the top 5 models via stratified validation, we performed feature importance filtering, dropping 86 non-informative features.
 -   A second Optuna round refined `step_size`, `subsample_rate`, and `min_instances_per_node` within the ranges where best perfomance was observed previously, with `max_depth` fixed at 3. This sound used cross validation instead of a fixed validation set. 
-- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.681 with a step_size of 0.05, subsample_rate of 0.5 and min_instances_per_node of 1 with parameters: {'step_size': 0.2885, 'subsample_rate': 0.6341, 'min_instances_per_node': 18}
+- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10.
 -  Final model was trained using optimal hyperparameters on the full training data. This took 3 minutes. 
 - Making predictions on the test set took less than a second and evaluation with the PySpark evaluators took 45 seconds. 
 
@@ -353,29 +361,23 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 
 #### Gradient Boosted Trees
 
--   **AUC**: 0.9110
--   **AUPRC**: 0.0126
--   **Precision** (overall): 0.9982
--   **Recall** (overall): 0.8026
--   **F1 Score**: 0.8890
--   **False Positive Rate**: 19.75%
--   **Positive Predictive Value (accidents only)**: 0.68%
+-   **AUC**:  0.571
+-   **AUPRC**: 0.00293
+-   **Precision** (overall): 0.9953
+-   **Recall** (overall): 0.7623
+-   **F1 Score**: 0.8629
+-   **False Positive Rate**:  23.65%
+-   **Positive Predictive Value (accidents only)**: 0.27%
 
-> The GBT model achieves a high AUC but suffers from an extremely low positive predictive value. Only 0.68% of predicted accidents are correct, indicating many false alarms.
+> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.27% of predicted accidents are correct, indicating many false alarms.
 
-The AUC on the test set was much higher than what we expected from cross-validation. We
-think this could be due to two reasons. 
-
-  * First, the model might have overfit to the validation folds during cross-validation, particularly given the extreme class imbalance observed in our data. As shown in our fold distribution, each fold contained approximately 55,600 examples of class 0 and only 86-87 examples of class 1, creating a significant imbalance ratio of roughly 640:1. With
-  such severe class imbalance, the model likely struggled to generalize properly during cross-validation, leading to inconsistent performance across folds. 
-  * Secondly, the training/validation data and the test data might come from different distributions. For example, the test set may contain more representative or easier examples compared to the training data because adherence to the Motive API has increased with driver incentives, resulting in more
-  high-quality complete data.
+The AUC on the test set was much higher than what we expected from cross-validation. We think this could be due to two reasons. 
 
 ### 6. Key takeaways
 
 -   Both models surfaced meaningful features, including prior accidents, safety events, inspection history, and driving tenure.
 -  External data (precipitation, crash statistics) was less informative than internal data. 
--   GBT outperformed RF in terms of AUC but still lacked precision on accident prediction due to data imbalance.
+-   GBT slightly outperformed RF in terms of AUC but still lacked precision on accident prediction due to data imbalance.
 -   The quality of the prediction is ultimately limited by data quality: missing values, inconsistent adoption of Motive, and unreliable accident records.
 -   Future modeling should focus on improving data coverage, especially around route information, accident validation, and consistent sensor usage.
 -   Several key features were consistently important across both the Random Forest and Gradient Boosted Tree models:
