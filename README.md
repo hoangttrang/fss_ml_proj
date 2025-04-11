@@ -344,7 +344,7 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 
 - Hyperparameter tuning was performed using the same train/val split as above with a Grid Search 
 -   Tuned parameters included:
-    -   `layers`: [52, 10, 2], [52, 16, 8, 2]
+    -   `layers`: [num_features, 10, 2], [num_features, 16, 8, 2]
     -   `stepSize`: [0.001, 0.01, 0.1]
 - The initial hyperparameter tuning across these six parameter configurations took 3h 18 min. All of the cross validation AUC scores round to 0.50. We could not use a weight column and using a weighted loss function would have required a custom loss function, so the model was not able to learn anything useful.
 - Training the final model with the best set of hyperparameters took 1 minute. 
@@ -377,16 +377,18 @@ These are the results of our models given the whole train data
 
 <img src="assets/gbt_train_performance.png" alt="GBT - Performance on Training Data" width="60%"/>
 
-#### MLP Classifier (Without Early Stopping )
+#### MLP Classifier 
 
 **Without Early Stopping**
--   **AUC**: [FILL IN]
--   **AUPRC**: [FILL IN]
--   **Precision** [FILL IN]
--   **Recall** [FILL IN]
--   **True Positive Rate (accidents only)**: [FILL IN]
--   **False Positive Rate**: [FILL IN]
--   **Positive Predictive Value (accidents only)**: [FILL IN]
+-   **AUC**: 0.9097
+-   **AUPRC**: 0.1919
+-   **Precision** 0.9988
+-   **Recall** 0.99880
+-   **True Positive Rate (accidents only)**: 0.2346
+-   **False Positive Rate**: 0.0000
+-   **Positive Predictive Value (accidents only)**: 1.0000
+
+<img src="assets/mlp_train_performance_no_es.png" alt="MLP - Training Data (no early stopping)" width="60%"/>
 
 **With Early Stopping**
 -   **AUC**: [FILL IN]
@@ -430,21 +432,33 @@ These are the results of our models given the whole train data
 -   **True positive rate (accidents only)**: 0.0030
 
 
-> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.27% of predicted accidents are correct, indicating many false alarms. Compared to the performance on the training set, we observe 
+> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.30% of predicted accidents are correct, indicating many false alarms. Compared to the performance on the training set, we observe a very large decrease in model performance, indicating that there was overfitting during training which lead to overly optimistic performance estimates. 
 
 <img src="assets/gbt_test_performance.png" alt="GBT - Performance on Test Data" width="60%"/>
 
 #### Multi Layer Perception Classifier
 
--   **AUC**:  0.571
--   **AUPRC**: 0.00293
--   **Precision** (overall): 0.9953
--   **Recall** (overall): 0.7623
--   **F1 Score**: 0.8629
--   **False Positive Rate**:  23.65%
--   **Positive Predictive Value (accidents only)**: 0.27%
+**Without Early Stopping**
+-   **AUC**: 0.90972
+-   **AUPRC**: 0.002427
+-   **Precision** 0.9988
+-   **Recall** 0.99748
+-   **True Positive Rate (accidents only)**: 0.0000
+-   **False Positive Rate**:  0.0001
+-   **Positive Predictive Value (accidents only)**: 0.0000
 
-> The model
+<img src="assets/mlp_test_performance_no_es.png" alt="MLP - Performance on Test Data (no early stopping)" width="60%"/>
+
+
+**With Early Stopping**
+-   **AUC**: [FILL IN]
+-   **AUPRC**: [FILL IN]
+-   **Precision** [FILL IN]
+-   **Recall** [FILL IN]
+-   **True Positive Rate (accidents only)**: [FILL IN]
+-   **False Positive Rate**: [FILL IN]
+-   **Positive Predictive Value (accidents only)**: [FILL IN]
+
 
 ### 6. Key takeaways
 
