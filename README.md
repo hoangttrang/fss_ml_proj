@@ -359,7 +359,7 @@ These are the results of our models given the whole train data
 
 <img src="assets/rf_train_performance.png" alt="RF - Performance on Train Data" width="60%"/>
 
-**Observations: **
+**Observations:**
 - Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class eventhough we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
 - There is a sharp drop in precision at low recall. Precision rapidly declines after a small amount of recall is achieved. This means that most of the true positives are detected only when allowing a large number of false positives.
 
