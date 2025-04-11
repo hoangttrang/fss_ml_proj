@@ -73,7 +73,7 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 
     <img src="assets/cluster_specs.png" alt="Cluster Specs" width="30%"/>
 
-    -   We used the specifications above, but depending on your compute budget and timelines, you can adjust the cluster size and type.
+    -   We used the specifications above for training the GBT Classifier models and Multi Layer Perception without early stopping, but depending on your compute budget and timelines, you can adjust the cluster size and type.
     -   Specify build/install_geopandas.sh as the init script for the cluster
     -   The cluster is configured with the following libraries:
         -   `geopandas`: For geospatial data processing and analysis (PyPi)
@@ -173,9 +173,9 @@ Notebooks listed in the order they should be run.
 
 ### D. Model Training and Model Evaluation
 
-**gbt_hypertraining.ipynb** and **rf_hypertuning.ipynb**
+**gbt_hypertraining.ipynb** , **rf_hypertuning.ipynb**, **mlp_hypertuning.ipynb**
 
--   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT) and Random Forest (RF). They apply stratified cross-validation to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.
+-   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT), Random Forest (RF), and a Multi Layer Perception Classifier. Training splits were stratified to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.
 -   Outcome: Tuned models with evaluation results based on test performance.
 
 ## V. Methodology
@@ -329,12 +329,6 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
     -   `subsample_rate`: [0.5, 1.0]
     -   `min_instances_per_node`: [1, 20]
 
-### Multilayer Perceptron Classifier
-
-- Hyperparameter tuninf was performed using the same train/val split as above with a Grid Search 
--   Tuned parameters included:
-    -   `layers`: [54, 10, 2], [54, , 16, 8, 2]
-    -   `stepSize`: [0.001, 0.01, 0.1]
 
 <img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
@@ -345,6 +339,15 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 - The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10.
 -  Final model was trained using optimal hyperparameters on the full training data. This took 3 minutes. 
 - Making predictions on the test set took less than a second and evaluation with the PySpark evaluators took 45 seconds. 
+
+### Multilayer Perceptron Classifier
+
+- Hyperparameter tuning was performed using the same train/val split as above with a Grid Search 
+-   Tuned parameters included:
+    -   `layers`: [52, 10, 2], [52, 16, 8, 2]
+    -   `stepSize`: [0.001, 0.01, 0.1]
+- The initial hyperparameter tuning across these six parameter configurations took 3h 18 min. All of the cross validation AUC scores round to 0.50. We could not use a weight column and using a weighted loss function would have required a custom loss function, so the model was not able to learn anything useful.
+- Training the final model with the best set of hyperparameters took 1 minute. 
 
 ### 5. Model Performance on Train Data
 These are the results of our models given the whole train data 
@@ -360,8 +363,39 @@ These are the results of our models given the whole train data
 <img src="assets/rf_train_performance.png" alt="RF - Performance on Train Data" width="60%"/>
 
 **Observations:**
-- Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class eventhough we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
+- Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class even though we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
 - There is a sharp drop in precision at low recall. Precision rapidly declines after a small amount of recall is achieved. This means that most of the true positives are detected only when allowing a large number of false positives.
+
+#### GBT Classifier 
+-   **AUC**: 0.91629
+-   **AUPRC**: 0.01697 (very low)
+-   **Precision** (overall): 0.99819
+-   **Recall** (overall): 0.8150
+-   **True Positive Rate (accidents only)**:  0.8615
+-   **False Positive Rate**: 18.51%
+-   **Positive Predictive Value (accidents only)**: .00072
+
+<img src="assets/gbt_train_performance.png" alt="GBT - Performance on Training Data" width="60%"/>
+
+#### MLP Classifier (Without Early Stopping )
+
+**Without Early Stopping**
+-   **AUC**: [FILL IN]
+-   **AUPRC**: [FILL IN]
+-   **Precision** [FILL IN]
+-   **Recall** [FILL IN]
+-   **True Positive Rate (accidents only)**: [FILL IN]
+-   **False Positive Rate**: [FILL IN]
+-   **Positive Predictive Value (accidents only)**: [FILL IN]
+
+**With Early Stopping**
+-   **AUC**: [FILL IN]
+-   **AUPRC**: [FILL IN]
+-   **Precision** [FILL IN]
+-   **Recall** [FILL IN]
+-   **True Positive Rate (accidents only)**: [FILL IN]
+-   **False Positive Rate**: [FILL IN]
+-   **Positive Predictive Value (accidents only)**: [FILL IN]
 
 ### 6. Model Performance on Test Data
 
@@ -390,13 +424,27 @@ These are the results of our models given the whole train data
 -   **AUPRC**: 0.00293
 -   **Precision** (overall): 0.9953
 -   **Recall** (overall): 0.7623
+-   **True Positive Rate (accidents only)**: 0.2778
+-   **F1 Score**: 0.8629
+-   **False Positive Rate**:  23.65%
+-   **True positive rate (accidents only)**: 0.0030
+
+
+> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.27% of predicted accidents are correct, indicating many false alarms. Compared to the performance on the training set, we observe 
+
+<img src="assets/gbt_test_performance.png" alt="GBT - Performance on Test Data" width="60%"/>
+
+#### Multi Layer Perception Classifier
+
+-   **AUC**:  0.571
+-   **AUPRC**: 0.00293
+-   **Precision** (overall): 0.9953
+-   **Recall** (overall): 0.7623
 -   **F1 Score**: 0.8629
 -   **False Positive Rate**:  23.65%
 -   **Positive Predictive Value (accidents only)**: 0.27%
 
-> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.27% of predicted accidents are correct, indicating many false alarms.
-
-The AUC on the test set was much higher than what we expected from cross-validation. We think this could be due to two reasons. 
+> The model
 
 ### 6. Key takeaways
 
