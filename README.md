@@ -314,10 +314,12 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 -   We perform 4-fold stratified cross-validation for hyperparameter tuning to address class imbalance.
 -   Tuned parameters included:
     -   `numTrees`: [50, 60, ..., 120]
-    -   `maxDepth`: [5, 10, 15]
+    -   `maxDepth`: [5, 10, 15,20]
     -   `maxBins`: [32, 64]
 -   After selecting the best configuration (110 trees, depth of 5, 64 bins), we retrained the model on the full training set.
 -   Feature importance analysis revealed 26 features with zero impact; these were dropped before final training.
+-   Training the model with the best set of parameters take 1 minutes 16.46 seconds
+-   We originally trained the model without an early stop. It took us roughly 4 hours to train with same number of trees, same number of maxBins but only 3 values for max Depth (5,10, 15); with the early stopper, the run time cut down to only 1 hour. Because of that, I included an extra max depth parameter to see if the model can perform better. Because of this, from now on all of our model performance woulde derive from the model with early stopper. 
 -   The model was retrained after filtering and evaluated on a holdout set for unbiased performance assessment.
 
 #### Gradient Boosted Trees Classifier
@@ -329,14 +331,13 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
     -   `subsample_rate`: [0.5, 1.0]
     -   `min_instances_per_node`: [1, 20]
 
-
 <img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
 -  The inital 30 trials with all of the featues took 2 hr and 45 min to complete. The best AUC on the validation set was .7429 with a max_depth of 3, step_size of 0.228 subsample_rate of 0.884 and min_instances_per_node of 10. 
 -  We then took the best performing parameters and ran cross validation on the training set to get a better estimate of the model performance and make sure the best parameters were not overfitting to the validation set. This took 42 minutes. 
 - After selecting the top 5 models via stratified validation, we performed feature importance filtering, dropping 86 non-informative features.
 -   A second Optuna round refined `step_size`, `subsample_rate`, and `min_instances_per_node` within the ranges where best perfomance was observed previously, with `max_depth` fixed at 3. This sound used cross validation instead of a fixed validation set. 
-- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10.
+- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10. 
 -  Final model was trained using optimal hyperparameters on the full training data. This took 3 minutes. 
 - Making predictions on the test set took less than a second and evaluation with the PySpark evaluators took 45 seconds. 
 
@@ -351,16 +352,19 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 
 ### 5. Model Performance on Train Data
 These are the results of our models given the whole train data 
-#### Random Forest 
--   **AUC**: 0.8685 
--   **AUPRC**: 0.0211 (very low)
--   **Precision** (overall): 0.9977
--   **Recall** (overall): 0.8972
--   **True Positive Rate (accidents only)**: 59.61%
--   **False Positive Rate**: 10.22%
--   **Positive Predictive Value (accidents only)**: 0.9%
 
-<img src="assets/rf_train_performance.png" alt="RF - Performance on Train Data" width="60%"/>
+#### Random Forest
+
+-   **Inference Time**:  76.47s
+-   **AUC**: 0.8526
+-   **AUPRC**: 0.019 (very low)
+-   **Precision** (overall): 0.9977
+-   **Recall** (overall): 0.8707
+-   **True Positive Rate (accidents only)**: 59.61%
+-   **False Positive Rate**: 12.88%
+-   **Positive Predictive Value (accidents only)**: 0.0072
+
+<img src="assets/rf_train_performance_es.png" alt="RF - Performance on Train Data" width="60%"/>
 
 **Observations:**
 - Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class even though we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
@@ -388,40 +392,45 @@ These are the results of our models given the whole train data
 -   **False Positive Rate**: 0.0000
 -   **Positive Predictive Value (accidents only)**: 1.0000
 
-<img src="assets/mlp_train_performance_no_es.png" alt="MLP - Training Data (no early stopping)" width="60%"/>
 
 **With Early Stopping**
--   **AUC**: [FILL IN]
--   **AUPRC**: [FILL IN]
--   **Precision** [FILL IN]
--   **Recall** [FILL IN]
--   **True Positive Rate (accidents only)**: [FILL IN]
--   **False Positive Rate**: [FILL IN]
--   **Positive Predictive Value (accidents only)**: [FILL IN]
+-   **AUC**: 0.830
+-   **AUPRC**: 0.0491
+-   **Precision**: 0.9980
+-   **Recall**: 0.9984
+-   **True Positive Rate (accidents only)**: 0.0615
+-   **False Positive Rate**: 4.196
+-   **Positive Predictive Value (accidents only)**:  0.6956
+
+<img src="assets/mlp_train_performance_es.png" alt="MLP - Training Data (no early stopping)" width="60%"/>
+
 
 ### 6. Model Performance on Test Data
 
 #### Random Forest
 
--   **AUC**: 0.5698 (barely above random)
--   **AUPRC**: 0.00298 (very low)
--   **Precision** (overall): 0.9953
--   **Recall** (overall): 0.8708
--   **True Positive Rate (accidents only)**: 17.59%
--   **False Positive Rate**: 12.75%
--   **Positive Predictive Value (accidents only)**: 0.32%
+-   **Inference Time**:  0.29
+-   **AUC**: 0.5826 (barely above random)
+-   **AUPRC**: 0.0031 (very low)
+-   **Precision** (overall): 0.9954
+-   **Recall** (overall): 0.8050
+-   **True Positive Rate (accidents only)**: 26.85%
+-   **False Positive Rate**: 19.4%
+-   **Positive Predictive Value (accidents only)**: 0.33%
+
 
 **Observation:**
 - The PR curve is nearly flat at the bottom, and the area under the curve is close to zero. This confirms that the model is not effective at identifying the positive class — precision remains very low across all recall levels
-- Out of 108 actual positive cases, the model correctly predicted only 19, while 89 were missed (false negatives). The recall (sensitivity) is extremely low, suggesting the model fails to detect most positive instances. At the same time, 5,759 false positives indicate that increasing sensitivity would likely worsen precision even further.
-
+- Out of 108 actual positive cases, the model correctly predicted only 29, while 79 were missed (false negatives). The recall (sensitivity) is extremely low, suggesting the model fails to detect most positive instances. At the same time, 5,759 false positives indicate that increasing sensitivity would likely worsen precision even further.
+- In RF, the model performance using early stopper show significant performance in time training. Cutting down the time by half comparing with training the entire pipeline 
 
 > Despite strong overall precision and recall (due to class imbalance), the model struggles to identify true accidents. Only 0.32% of flagged accidents are correct.
 
-<img src="assets/rf_test_performance.png" alt="RF - Performance on Test Data" width="60%"/>
+<img src="assets/rf_test_performance_es.png" alt="RF - Performance on Test Data" width="60%"/>
 
 #### Gradient Boosted Trees
 
+-   **Inference Time**:
 -   **AUC**:  0.571
 -   **AUPRC**: 0.00293
 -   **Precision** (overall): 0.9953
@@ -447,10 +456,10 @@ These are the results of our models given the whole train data
 -   **False Positive Rate**:  0.0001
 -   **Positive Predictive Value (accidents only)**: 0.0000
 
-<img src="assets/mlp_test_performance_no_es.png" alt="MLP - Performance on Test Data (no early stopping)" width="60%"/>
 
 
 **With Early Stopping**
+-   **Inference Time**:
 -   **AUC**: [FILL IN]
 -   **AUPRC**: [FILL IN]
 -   **Precision** [FILL IN]
@@ -459,11 +468,19 @@ These are the results of our models given the whole train data
 -   **False Positive Rate**: [FILL IN]
 -   **Positive Predictive Value (accidents only)**: [FILL IN]
 
+<img src="assets/mlp_test_performance_es.png" alt="MLP - Performance on Test Data (no early stopping)" width="60%"/>
+
+
+**Observation**: 
+- The model appears to classify nearly everything as negative and completely misses the positive class (0 true positives).
+- This model yields a very low true‐positive rate and a PR‐AUC of only 0.002, indicating poor performance on the minority class.
+- Although precision and recall look high for the negative class, the overall ROC curve has an AUC of 0.456, which is close to random performance.
+- The confusion matrix confirms a severe imbalance where 108 out of 108 positives are misclassified, suggesting the model is not recognizing positives at all.
 
 ### 6. Key takeaways
 
 -   Both models surfaced meaningful features, including prior accidents, safety events, inspection history, and driving tenure.
--  External data (precipitation, crash statistics) was less informative than internal data. 
+-   External data (precipitation, crash statistics) was less informative than internal data. 
 -   GBT slightly outperformed RF in terms of AUC but still lacked precision on accident prediction due to data imbalance.
 -   The quality of the prediction is ultimately limited by data quality: missing values, inconsistent adoption of Motive, and unreliable accident records.
 -   Future modeling should focus on improving data coverage, especially around route information, accident validation, and consistent sensor usage.
