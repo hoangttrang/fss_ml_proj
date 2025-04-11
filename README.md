@@ -84,7 +84,7 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 -   Google Cloud Dataproc: Provides a managed Hadoop and Spark cluster environment for large-scale data processing.
 
     -   The script used to create the cluster, `create_gc_bash.sh`, written by Yehyun Suh can be found in the `build` folder.
-    -   Once this has been uploaded to the cloud shell editor run the following command to create the cluster:\
+    -   Once this has been uploaded to the cloud shell editor run the following command to create the cluster:
         `bash create_gc_bash.sh -p_id <PROJECT_ID> -b_n <BUCKET_NAME> -c_n <CLUSTER_NAME> -region <REGION> -bill <BILLING_ACCOUNT>`
 
 -   HDFS (Hadoop Distributed File System): Facilitates storage of large datasets in a distributed manner, enabling efficient parallel operations.
@@ -93,13 +93,13 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 
 ### General WorkFlow:
 
-1.  Data storage in HDFS\
+1.  Data storage in HDFS
     After data cleaning and aggregation, we store both internal (FusionSites data) and external data in HDFS. While this increases storage needs, it prevents re-running heavy computations in subsequent steps.
-2.  Feature engineering in a distributed environment\
+2.  Feature engineering in a distributed environment
     We merge cleaned datasets in HDFS and use Spark on Databricks or Dataproc for parallel feature engineering. This approach handles large data volumes efficiently and shortens processing times.
-3.  Model training with Spark\
+3.  Model training with Spark
     We create train and test sets in HDFS and leverage Spark’s distributed ML libraries. Databricks or Dataproc resources scale on demand, keeping training both efficient and cost-effective.
-4.  Python for final model execution\
+4.  Python for final model execution
     Final model training and tuning run in Python scripts to reduce notebook overhead. This approach simplifies automation and keeps iterative experiments efficient. By saving intermediate outputs after each step, we avoid repetitive heavy-lift transformations, preserving data lineage and supporting iterative experimentation in a production-scale environment.
 
 ## IV. Repository Structure
@@ -115,7 +115,7 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 -   **motive_data_preprocessing.ipynb**
     -   Purpose: This notebook is used as our preliminary processing test to see how can we joined all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
 -   **motive_eda_feature_selection.ipynb**
-    -   Purpose: This notebook uses for slightly complex EDA questions and create Motive's data features engineer\
+    -   Purpose: This notebook uses for slightly complex EDA questions and create Motive's data features engineer
     -   Outcome: 1 table that can be joined with external data with all the features engineer components created
 
 #### B. External data processing notebooks
@@ -127,7 +127,7 @@ Notebooks listed in the order they should be run.
 -   **yearly_state_crash_data_processing.ipynb**
 
     -   Purpose: Preprocess and explore FMCSA state crash data.
-    -   Aggregate individual crash events to monthly county-level crash counts, fatalities, injuries, and involved vehicles.\
+    -   Aggregate individual crash events to monthly county-level crash counts, fatalities, injuries, and involved vehicles.
     -   Outcome: Crash statistics by state, county, month, and year.
 
 -   **weather_data_processing.ipynb**
@@ -143,7 +143,7 @@ Notebooks listed in the order they should be run.
 
 -   **accident_data_location_processing.ipynb**
 
-    -   Purpose: Refine accident records to extract and standardize relevant location information (mapping accident coordinates to counties or ZIP codes).\
+    -   Purpose: Refine accident records to extract and standardize relevant location information (mapping accident coordinates to counties or ZIP codes).
     -   Outcome: Ensures geographic accuracy, enabling robust spatial joins with other external data sources.
 
 -   **map_external_location_data_to_accidents.ipynb**
@@ -175,7 +175,7 @@ Notebooks listed in the order they should be run.
 
 **gbt_hypertraining.ipynb** and **rf_hypertuning.ipynb**
 
--   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT) and Random Forest (RF). They apply stratified cross-validation to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.\
+-   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT) and Random Forest (RF). They apply stratified cross-validation to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.
 -   Outcome: Tuned models with evaluation results based on test performance.
 
 ## V. Methodology
@@ -214,43 +214,43 @@ Feature engineering is conducted separately on internal and external datasets to
 
 #### External data feature engineering
 
-**State crash data (`yearly_crash_data_processing.ipynb`)**\
-- No missing or non-numerical variables were used.\
-- Raw crash-level data was grouped by crash year, month, state, and county.\
-- Aggregated features include:\
-- Total number of crashes\
-- Total fatalities\
-- Total injuries\
-- Total vehicles involved\
+**State crash data (`yearly_crash_data_processing.ipynb`)**
+- No missing or non-numerical variables were used.
+- Raw crash-level data was grouped by crash year, month, state, and county.
+- Aggregated features include:
+- Total number of crashes
+- Total fatalities
+- Total injuries
+- Total vehicles involved
 - Output: `state_crash_monthly_county_counts`
 
-**Precipitation data**\
-- Used daily total precipitation by ZIP code from 2023 to 2025.\
-- Transformed from wide to long format.\
-- Aggregated at the site-date level to compute:\
-- Mean, median, std dev, quartiles, min, max, and IQR.\
+**Precipitation data**
+- Used daily total precipitation by ZIP code from 2023 to 2025.
+- Transformed from wide to long format.
+- Aggregated at the site-date level to compute:
+- Mean, median, std dev, quartiles, min, max, and IQR.
 - Output: `final_precipitation_stats`
 
-**ZIP code shapefile and FusionSites data (`site_radius_by_zipcode.ipynb`)**\
-- Transformed geographic coordinates to appropriate CRS for distance calculations.\
-- Calculated distances between each FusionSites ZIP code and surrounding ZIP codes (within a 40-mile radius).\
-- Derived features:\
-- Target ZIP codes per site\
-- Distance to each ZIP\
+**ZIP code shapefile and FusionSites data (`site_radius_by_zipcode.ipynb`)**
+- Transformed geographic coordinates to appropriate CRS for distance calculations.
+- Calculated distances between each FusionSites ZIP code and surrounding ZIP codes (within a 40-mile radius).
+- Derived features:
+- Target ZIP codes per site
+- Distance to each ZIP
 - Output: Intermediate site-ZIP distance tables
 
-**Crash + Precipitation mapping to sites (`map_external_data_to_sites.ipynb`)**\
-- Mapped aggregated crash and weather data to site locations via ZIP and county codes.\
-- Applied inner joins with distinct filters to avoid duplication.\
-- Output:\
-- `aggregated_site_radius_crash_df`\
+**Crash + Precipitation mapping to sites (`map_external_data_to_sites.ipynb`)**
+- Mapped aggregated crash and weather data to site locations via ZIP and county codes.
+- Applied inner joins with distinct filters to avoid duplication.
+- Output:
+- `aggregated_site_radius_crash_df`
 - `final_precipitation_stats`
 
-**Location data feature engineering (`location_data_feature_engineering.ipynb`)**\
-- Aggregated crash stats by site, brand, year, and month.\
-- Created rolling-window statistics (mean, median, std, IQR, etc.) using Spark window functions.\
-- Calculated moving averages for crash metrics (1–6 months) and precipitation metrics (1–3 days).\
-- Generated a complete calendar with all site-date combinations to ensure temporal coverage.\
+**Location data feature engineering (`location_data_feature_engineering.ipynb`)**
+- Aggregated crash stats by site, brand, year, and month.
+- Created rolling-window statistics (mean, median, std, IQR, etc.) using Spark window functions.
+- Calculated moving averages for crash metrics (1–6 months) and precipitation metrics (1–3 days).
+- Generated a complete calendar with all site-date combinations to ensure temporal coverage.
 - Output: Final engineered CSV file ready to be merged with Motive data.
 
 #### Internal data feature engineering (Motive + driver-level data)
@@ -292,7 +292,7 @@ Before splitting the data, we perform the following steps: - Remove leakage-pron
 
   - Handle categorical and date variables: Non-numerical fields such as `trip_date` are either removed or converted using one-hot encoding. 
   - Remove unnecessary columns: Columns that are not relevant to the modeling process (e.g., `vehicle_id`, `driver_id`, `trip_id`) and could lead to data leakage and overfitting are removed.
-  - Address class imbalance: The dataset contains a significant imbalance (\~368 accident trips vs. 201,498 non-accident trips). To reduce bias while preserving structure, we apply undersampling by removing all non-accident trips that occurred before the first recorded accident trip. This helps maintain data integrity while improving class balance.
+  - Address class imbalance: The dataset contains a significant imbalance (~368 accident trips vs. 201,498 non-accident trips). To reduce bias while preserving structure, we apply undersampling by removing all non-accident trips that occurred before the first recorded accident trip. This helps maintain data integrity while improving class balance.
 
 #### Train-test split
 
@@ -307,15 +307,15 @@ The split above will ensure a rough 80-20 split between train and test sets.
 
 We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees (GBT)**, each with their own tuning and evaluation pipelines.
 
-<img src="assets/hyperparameter_tuning.png" alt="Hyperparameter_tuning" width="100%"/>
+<img src="assets/hyperparameter_tuning.jpg" alt="Hyperparameter_tuning" width="100%"/>
 
 #### Random Forest Classifier
 
 -   We perform 4-fold stratified cross-validation for hyperparameter tuning to address class imbalance.
 -   Tuned parameters included:
-    -   `numTrees`: \[50, 60, ..., 120\]\
-    -   `maxDepth`: \[5, 10, 15\]\
-    -   `maxBins`: \[32, 64\]\
+    -   `numTrees`: [50, 60, ..., 120]
+    -   `maxDepth`: [5, 10, 15]
+    -   `maxBins`: [32, 64]
 -   After selecting the best configuration (110 trees, depth of 5, 64 bins), we retrained the model on the full training set.
 -   Feature importance analysis revealed 26 features with zero impact; these were dropped before final training.
 -   The model was retrained after filtering and evaluated on a holdout set for unbiased performance assessment.
@@ -324,17 +324,17 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 
 -   Hyperparameter tuning was performed using **Optuna** with a Tree-structured Parzen Estimator (TPE).
 -   Initial tuning explored:
-    -   `max_depth`: \[3, 15\]\
-    -   `step_size`: \[0.05, 3\]\
-    -   `subsample_rate`: \[0.5, 1.0\]\
-    -   `min_instances_per_node`: \[1, 20\]
+    -   `max_depth`: [3, 15]
+    -   `step_size`: [0.05, 3]
+    -   `subsample_rate`: [0.5, 1.0]
+    -   `min_instances_per_node`: [1, 20]
 
 ### Multilayer Perceptron Classifier
 
 - Hyperparameter tuninf was performed using the same train/val split as above with a Grid Search 
 -   Tuned parameters included:
-    -   `layers`: \[54, 10, 2], [54, , 16, 8, 2]\
-    -   `stepSize`: \[0.001, 0.01, 0.1\]\
+    -   `layers`: [54, 10, 2], [54, , 16, 8, 2]
+    -   `stepSize`: [0.001, 0.01, 0.1]
 
 <img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
@@ -346,18 +346,43 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 -  Final model was trained using optimal hyperparameters on the full training data. This took 3 minutes. 
 - Making predictions on the test set took less than a second and evaluation with the PySpark evaluators took 45 seconds. 
 
-### 5. Model Performance on Test Data
+### 5. Model Performance on Train Data
+These are the results of our models given the whole train data 
+#### Random Forest 
+-   **AUC**: 0.8685 
+-   **AUPRC**: 0.0211 (very low)
+-   **Precision** (overall): 0.9977
+-   **Recall** (overall): 0.8972
+-   **True Positive Rate (accidents only)**: 59.61%
+-   **False Positive Rate**: 10.22%
+-   **Positive Predictive Value (accidents only)**: 0.9%
+
+<img src="assets/rf_train_performance.png" alt="RF - Performance on Train Data" width="60%"/>
+
+**Observations: **
+- Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class eventhough we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
+- There is a sharp drop in precision at low recall. Precision rapidly declines after a small amount of recall is achieved. This means that most of the true positives are detected only when allowing a large number of false positives.
+
+### 6. Model Performance on Test Data
 
 #### Random Forest
 
--   **AUC**: 0.5452 (barely above random)
--   **AUPRC**: 0.00276 (very low)
+-   **AUC**: 0.5698 (barely above random)
+-   **AUPRC**: 0.00298 (very low)
 -   **Precision** (overall): 0.9953
--   **Recall** (overall): 0.8716
--   **True Positive Rate (accidents only)**: 16.67%
--   **Positive Predictive Value (accidents only)**: 0.31%
+-   **Recall** (overall): 0.8708
+-   **True Positive Rate (accidents only)**: 17.59%
+-   **False Positive Rate**: 12.75%
+-   **Positive Predictive Value (accidents only)**: 0.32%
 
-> Despite strong overall precision and recall (due to class imbalance), the model struggles to identify true accidents. Only 0.31% of flagged accidents are correct.
+**Observation:**
+- The PR curve is nearly flat at the bottom, and the area under the curve is close to zero. This confirms that the model is not effective at identifying the positive class — precision remains very low across all recall levels
+- Out of 108 actual positive cases, the model correctly predicted only 19, while 89 were missed (false negatives). The recall (sensitivity) is extremely low, suggesting the model fails to detect most positive instances. At the same time, 5,759 false positives indicate that increasing sensitivity would likely worsen precision even further.
+
+
+> Despite strong overall precision and recall (due to class imbalance), the model struggles to identify true accidents. Only 0.32% of flagged accidents are correct.
+
+<img src="assets/rf_test_performance.png" alt="RF - Performance on Test Data" width="60%"/>
 
 #### Gradient Boosted Trees
 
@@ -384,7 +409,7 @@ The AUC on the test set was much higher than what we expected from cross-validat
     -   `vehicle_cum_issues`: History of vehicle issues is a strong predictor of accident risk.
     -   `rolling_15trip_avg_speed_mph`: Consistent high speeds over recent trips are associated with higher risk.
     -   `rolling_15day_total_distance`: Recent driving intensity plays a significant role in crash likelihood.
-    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure. \_ Additional insights from feature importance analysis
+    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure. _ Additional insights from feature importance analysis
     -   Long-term driving patterns are more predictive than single-trip behavior.
     -   GBT emphasized distraction-related events (e.g., cell phone use, drowsiness), while RF relied more on historical ratios and accident history.
     -   Speed-related features were important when considered over time, rather than as isolated events.
@@ -396,19 +421,19 @@ The AUC on the test set was much higher than what we expected from cross-validat
 
 Despite our efforts to engineer meaningful features and train predictive models, several challenges and limitations affected the scope and reliability of the project:
 
--   **Incomplete and inconsistent insurance claims data**\
+-   **Incomplete and inconsistent insurance claims data**
     Some insurance records were missing driver names or did not match any names from the Motive platform. In addition, the claims data often lacked vehicle information, which is critical since drivers may operate multiple vehicles in a single day. These gaps made it difficult to accurately link insurance-reported accidents with internal trip records.
 
--   **Driver login gaps and potential misattribution**\
+-   **Driver login gaps and potential misattribution**
     Before starting their trips, drivers sometimes failed to log into the Motive system. While the system still captured the trip data, the lack of a logged-in user meant that the associated `driver_id` was either missing or incorrect. This issue, combined with inconsistent or unreliable accident dates in the insurance claims data, made accurate matching difficult. To address this, we applied a fallback approach: when a valid `driver_id` was available, we matched each insurance-reported accident to the closest trip (by date) within a 30-day window starting from the reported accident date in the Motive records.
 
--   **Missing demographic information for some drivers**\
+-   **Missing demographic information for some drivers**
     Due to the login inconsistencies, many driver IDs lacked basic demographic information such as age or employment start date. As a result, we excluded these fields from our feature set and used each driver’s first recorded trip date as a proxy for driving tenure.
 
--   **Limited inspection data quality**\
+-   **Limited inspection data quality**
     While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only include the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
 
--   **Lack of trip-level location granularity**\
+-   **Lack of trip-level location granularity**
     We did not have access to start and end coordinates for individual trips. This limited our ability to match each trip precisely to weather conditions. Since weather can vary significantly even within the same city, we worked around this limitation by aggregating precipitation data within a 40-mile radius of the driver’s service site.
 
 ## Project Timeline
@@ -418,7 +443,7 @@ Despite our efforts to engineer meaningful features and train predictive models,
 * Feature Engineering and hyperparameter tuning (4/1 - 4/7)
 * Final model selection and final report (4/8 - 4/14)
 
-See `\milestones` for detailed progress reports. 
+See `milestones` for detailed progress reports. 
 
 ## How to Contribute 
 
