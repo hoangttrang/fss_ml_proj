@@ -111,7 +111,6 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 -   **motive_basic_eda.ipynb**
     -   Purpose: This notebook conduct very basic exploratory data analysis (like statistic summary, variables distributions) on Motive data on the raw data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide to use
     -   Outcome: Provides insights into table definitions, column descriptions, and initial data quality check
-    -   
 -   **motive_data_preprocessing.ipynb**
     -   Purpose: This notebook is used as our preliminary processing test to see how can we joined all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
 -   **motive_eda_feature_selection.ipynb**
