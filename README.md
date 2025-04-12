@@ -114,8 +114,8 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 -   **motive_data_preprocessing.ipynb**
     -   Purpose: This notebook is used as our preliminary processing test to see how we can join all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
 -   **motive_eda_feature_selection.ipynb**
-    -   Purpose: This notebook uses for slightly complex EDA questions and create Motive's data features engineer
-    -   Outcome: 1 table that can be joined with external data with all the features engineer components created
+    -   Purpose: This notebook answers slightly complex EDA questions and creates Motive data features for model training
+    -   Outcome: 1 joined table that comibnes all internal data with external data listed below.
 
 #### B. External data processing notebooks
 
@@ -167,7 +167,7 @@ Notebooks listed in the order they should be run.
 
 **data_aggregate_nb.ipynb**
 
--   Purpose: This notebook is used to combine external and internal data and further transform categorical type into One Hot Encoding. Afterward, we would split the data into Train and Test with threshold of 2024-11-01. Train data would be all the driver's trips before the threshold date. We are trying to predict after the test data threshold.
+-   Purpose: This notebook is used to combine external and internal data and further transform categorical type into One Hot Encoding. Afterwards, we would split the data into Train and Test with threshold of 2024-11-01. Train data would be all the driver's trips before the threshold date. All data after the threshold date is Test data.
 -   Outcome: Train and Test data with columns that are ready for model training
 
 ### D. Model Training and Model Evaluation
