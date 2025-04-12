@@ -87,20 +87,18 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
     -   Once this has been uploaded to the cloud shell editor run the following command to create the cluster:
         `bash create_gc_bash.sh -p_id <PROJECT_ID> -b_n <BUCKET_NAME> -c_n <CLUSTER_NAME> -region <REGION> -bill <BILLING_ACCOUNT>`
 
--   HDFS (Hadoop Distributed File System): Facilitates storage of large datasets in a distributed manner, enabling efficient parallel operations.
+-   Cloud Storage: We used both Databricks File System (DBFS) and Google Cloud Storage buckets for storing and managing large datasets throughout the project lifecycle.
 
 -   Spark: Employed for data parallelization, feature engineering, and large-scale model training.
 
-### General WorkFlow:
+### General Workflow:
 
-1.  Data storage in HDFS
-    After data cleaning and aggregation, we store both internal (FusionSites data) and external data in HDFS. While this increases storage needs, it prevents re-running heavy computations in subsequent steps.
-2.  Feature engineering in a distributed environment
-    We merge cleaned datasets in HDFS and use Spark on Databricks or Dataproc for parallel feature engineering. This approach handles large data volumes efficiently and shortens processing times.
-3.  Model training with Spark
-    We create train and test sets in HDFS and leverage Spark’s distributed ML libraries. Databricks or Dataproc resources scale on demand, keeping training both efficient and cost-effective.
-4.  Python for final model execution
-    Final model training and tuning run in Python scripts to reduce notebook overhead. This approach simplifies automation and keeps iterative experiments efficient. By saving intermediate outputs after each step, we avoid repetitive heavy-lift transformations, preserving data lineage and supporting iterative experimentation in a production-scale environment.
+1. **Cloud Storage for Data Management**: After data collection, cleaning and aggregation, we stored both internal (FusionSite data) and external data in cloud storage systems - primarily Databricks File System (DBFS) and Google Cloud Storage buckets. After initial cleaning, we created versioned data assets that could be accessed consistently across environments. By persisting intermediate outputs at each processing stage in cloud storage, we maintained data lineage, avoided redundant computations, and supported experimentation. This approach simplified collaboration and enabled us to focus on model improvement rather than repeatedly executing resource-intensive data transformations.
+
+2. **Parallel Feature Engineering**: We merged cleaned datasets from cloud storage and used Spark on both Databricks and Dataproc for parallel feature engineering. This distributed approach allowed us to process large data volumes efficiently and apply complex transformations across multiple nodes simultaneously. 
+
+3. **Distributed Model Development**: We created train and test sets in cloud storage and leveraged Spark's distributed machine learning library (MLLib) through PySpark. We explored modeling with the RandomForestClassifier, GBTClassifier, and MultilayerPerceptronClassifier estimators. Hyperparameter tuning was performed using grid search and Optuna, an automatic hyperparameter optimization software framework. We leveraged Spark's native Evaluator classes (BinaryClassificationEvaluator, MulticlassClassificationEvaluator) for model assessment and feature importance methods to identify key predictors.
+   
 
 ## IV. Repository Structure
 
