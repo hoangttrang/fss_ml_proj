@@ -109,10 +109,10 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 > /data_processing/internal_motive_data
 
 -   **motive_basic_eda.ipynb**
-    -   Purpose: This notebook conduct very basic exploratory data analysis (like statistic summary, variables distributions) on Motive data on the raw data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide to use
-    -   Outcome: Provides insights into table definitions, column descriptions, and initial data quality check
+    -   Purpose: This notebook conducts a very basic exploratory data analysis (like statistic summary, variables distributions) on the raw Motive data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide for use.
+    -   Outcome: Provides insights into table definitions, column descriptions, and an initial data quality check
 -   **motive_data_preprocessing.ipynb**
-    -   Purpose: This notebook is used as our preliminary processing test to see how can we joined all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
+    -   Purpose: This notebook is used as our preliminary processing test to see how we can join all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
 -   **motive_eda_feature_selection.ipynb**
     -   Purpose: This notebook uses for slightly complex EDA questions and create Motive's data features engineer
     -   Outcome: 1 table that can be joined with external data with all the features engineer components created
@@ -167,7 +167,7 @@ Notebooks listed in the order they should be run.
 
 **data_aggregate_nb.ipynb**
 
--   Purpose: This notebook is used to combining external and internal data and further transform categorical type into One Hot Encoding. Afterward, we would split the data into train and test with threshold of 2024-11-01. Train data would be all the driver's trip before the threshold date. We are trying to predict after the threshold, which is our test data
+-   Purpose: This notebook is used to combine external and internal data and further transform categorical type into One Hot Encoding. Afterward, we would split the data into Train and Test with threshold of 2024-11-01. Train data would be all the driver's trips before the threshold date. We are trying to predict after the test data threshold.
 -   Outcome: Train and Test data with columns that are ready for model training
 
 ### D. Model Training and Model Evaluation
@@ -193,7 +193,7 @@ Notebooks listed in the order they should be run.
 
 <p align="center">
 
-<em>We process and engineer features from external and internal data sources separately. External data includes crash statistics, precipitation, and geographic mappings, while internal data includes Motive driver activity and inspection logs. These are then joined by location (ZIP/county) and time (date/month) to create a unified, feature-rich dataset used for modeling.</em>
+<em>We process and engineer features from external and internal data sources separately. External data includes crash statistics, precipitation, and geographic mappings, while internal data includes Motive, Driver Activity and Inspection Logs. These are then joined by location (ZIP/county) and time (date/month) to create a unified, feature-rich dataset used for modeling.</em>
 
 </p>
 
@@ -207,7 +207,7 @@ To build a comprehensive dataset for accident prediction, we processed and joine
 
 -   Data aggregation and feature readiness: We grouped data at the monthly county level and computed key metrics such as crash counts, fatalities, injuries, and vehicles involved. Precipitation data was reshaped and categorized to support feature engineering. Special care was taken to avoid data leakage by ensuring only historical data is used in modeling.
 
-### 2. Features Engineering
+### 2. Feature Engineering
 
 Feature engineering is conducted separately on internal and external datasets to ensure that all variables are clean, structured, and informative before joining them into a unified dataset. The result is a single, feature-rich dataset that links driving behavior, environmental factors, and crash outcomes at a daily and county level. This dataset is cached for efficient exploration and modeling in downstream notebooks.
 
@@ -381,7 +381,7 @@ These are the results of our models given the whole train data
 <img src="assets/rf_train_performance_es.png" alt="RF - Performance on Train Data" width="60%"/>
 
 **Observations:**
-- Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class even though we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
+- Low Area under the PR curve: this suggests the model performed poorly in distinguishing the positive class even though we already include a class weight in our Random Forest Classifier. This result meant that our current training approach to class imbalance didn't fully address the class imbalance issues (in this case, the model still had a difficult time learning about the positive case)
 - There is a sharp drop in precision at low recall. Precision rapidly declines after a small amount of recall is achieved. This means that most of the true positives are detected only when allowing a large number of false positives.
 
 #### GBT Classifier 
@@ -502,11 +502,12 @@ These are the results of our models given the whole train data
     -   `vehicle_cum_issues`: History of vehicle issues is a strong predictor of accident risk.
     -   `rolling_15trip_avg_speed_mph`: Consistent high speeds over recent trips are associated with higher risk.
     -   `rolling_15day_total_distance`: Recent driving intensity plays a significant role in crash likelihood.
-    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure. _ Additional insights from feature importance analysis
-    -   Long-term driving patterns are more predictive than single-trip behavior.
-    -   GBT emphasized distraction-related events (e.g., cell phone use, drowsiness), while RF relied more on historical ratios and accident history.
-    -   Speed-related features were important when considered over time, rather than as isolated events.
-    -   Vehicle condition and maintenance history should be monitored closely for risk management.
+    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure.
+    -   Additional insights from feature importance analysis
+        -   Long-term driving patterns are more predictive than single-trip behavior.
+        -   GBT emphasized distraction-related events (e.g., cell phone use, drowsiness), while RF relied more on historical ratios and accident history.
+        -   Speed-related features were important when considered over time, rather than as isolated events.
+        -   Vehicle condition and maintenance history should be monitored closely for risk management.
 
 * A more practical short-term solution could be deploying a **dashboard** highlighting high-risk behaviors (e.g., speeding, harsh braking, overdue inspections) rather than deploying a low-confidence predictive model.
 
@@ -524,7 +525,7 @@ Despite our efforts to engineer meaningful features and train predictive models,
     Due to the login inconsistencies, many driver IDs lacked basic demographic information such as age or employment start date. As a result, we excluded these fields from our feature set and used each driver’s first recorded trip date as a proxy for driving tenure.
 
 -   **Limited inspection data quality**
-    While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only include the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
+    While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only included the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
 
 -   **Lack of trip-level location granularity**
     We did not have access to start and end coordinates for individual trips. This limited our ability to match each trip precisely to weather conditions. Since weather can vary significantly even within the same city, we worked around this limitation by aggregating precipitation data within a 40-mile radius of the driver’s service site.
