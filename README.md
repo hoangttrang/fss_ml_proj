@@ -73,7 +73,7 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 
     <img src="assets/cluster_specs.png" alt="Cluster Specs" width="30%"/>
 
-    -   We used the specifications above, but depending on your compute budget and timelines, you can adjust the cluster size and type.
+    -   We used the specifications above for training the GBT Classifier models and Multi Layer Perception without early stopping, but depending on your compute budget and timelines, you can adjust the cluster size and type.
     -   Specify build/install_geopandas.sh as the init script for the cluster
     -   The cluster is configured with the following libraries:
         -   `geopandas`: For geospatial data processing and analysis (PyPi)
@@ -109,14 +109,13 @@ See `Raw Data Dictionary.pdf` for more details on the data sources, including th
 > /data_processing/internal_motive_data
 
 -   **motive_basic_eda.ipynb**
-    -   Purpose: This notebook conduct very basic exploratory data analysis (like statistic summary, variables distributions) on Motive data on the raw data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide to use
-    -   Outcome: Provides insights into table definitions, column descriptions, and initial data quality check
-    -   
+    -   Purpose: This notebook conducts a very basic exploratory data analysis (like statistic summary, variables distributions) on the raw Motive data itself and doesn't do complex calculations to answer specific EDA questions. The goal is to understand the nature of the data and what kind of information can the data provide for use.
+    -   Outcome: Provides insights into table definitions, column descriptions, and an initial data quality check
 -   **motive_data_preprocessing.ipynb**
-    -   Purpose: This notebook is used as our preliminary processing test to see how can we joined all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
+    -   Purpose: This notebook is used as our preliminary processing test to see how we can join all the Motive tables (inspections, driving periods, combined events, idle events) into a unified data format.
 -   **motive_eda_feature_selection.ipynb**
-    -   Purpose: This notebook uses for slightly complex EDA questions and create Motive's data features engineer
-    -   Outcome: 1 table that can be joined with external data with all the features engineer components created
+    -   Purpose: This notebook answers slightly complex EDA questions and creates Motive data features for model training
+    -   Outcome: 1 joined table that comibnes all internal data with external data listed below.
 
 #### B. External data processing notebooks
 
@@ -168,14 +167,14 @@ Notebooks listed in the order they should be run.
 
 **data_aggregate_nb.ipynb**
 
--   Purpose: This notebook is used to combining external and internal data and further transform categorical type into One Hot Encoding. Afterward, we would split the data into train and test with threshold of 2024-11-01. Train data would be all the driver's trip before the threshold date. We are trying to predict after the threshold, which is our test data
+-   Purpose: This notebook is used to combine external and internal data and further transform categorical type into One Hot Encoding. Afterwards, we would split the data into Train and Test with threshold of 2024-11-01. Train data would be all the driver's trips before the threshold date. All data after the threshold date is Test data.
 -   Outcome: Train and Test data with columns that are ready for model training
 
 ### D. Model Training and Model Evaluation
 
-**gbt_hypertraining.ipynb** and **rf_hypertuning.ipynb**
+**gbt_hypertraining.ipynb** , **rf_hypertuning.ipynb**, **mlp_hypertuning.ipynb**
 
--   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT) and Random Forest (RF). They apply stratified cross-validation to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.
+-   Purpose: These notebooks train classification models using Gradient-Boosted Trees (GBT), Random Forest (RF), and a Multi Layer Perception Classifier. Training splits were stratified to ensure balanced representation of accident events in each fold. After identifying the best hyperparameters, the final model is evaluated on the held-out test set.
 -   Outcome: Tuned models with evaluation results based on test performance.
 
 ## V. Methodology
@@ -194,7 +193,7 @@ Notebooks listed in the order they should be run.
 
 <p align="center">
 
-<em>We process and engineer features from external and internal data sources separately. External data includes crash statistics, precipitation, and geographic mappings, while internal data includes Motive driver activity and inspection logs. These are then joined by location (ZIP/county) and time (date/month) to create a unified, feature-rich dataset used for modeling.</em>
+<em>We process and engineer features from external and internal data sources separately. External data includes crash statistics, precipitation, and geographic mappings, while internal data includes Motive, Driver Activity and Inspection Logs. These are then joined by location (ZIP/county) and time (date/month) to create a unified, feature-rich dataset used for modeling.</em>
 
 </p>
 
@@ -208,7 +207,7 @@ To build a comprehensive dataset for accident prediction, we processed and joine
 
 -   Data aggregation and feature readiness: We grouped data at the monthly county level and computed key metrics such as crash counts, fatalities, injuries, and vehicles involved. Precipitation data was reshaped and categorized to support feature engineering. Special care was taken to avoid data leakage by ensuring only historical data is used in modeling.
 
-### 2. Features Engineering
+### 2. Feature Engineering
 
 Feature engineering is conducted separately on internal and external datasets to ensure that all variables are clean, structured, and informative before joining them into a unified dataset. The result is a single, feature-rich dataset that links driving behavior, environmental factors, and crash outcomes at a daily and county level. This dataset is cached for efficient exploration and modeling in downstream notebooks.
 
@@ -257,17 +256,32 @@ Feature engineering is conducted separately on internal and external datasets to
 
 The following tables are cleaned, transformed, and joined by `driver_id`, `vehicle_id`, and `trip_date`:
 
-**Drivers Trips Information** - Includes trip frequency, average speed, distance, recency, and rolling trip stats: - `trip_date_distance`, `trip_date_minutes`, `trip_date_avg_speed_mph` - Rolling features like `rolling_7trip_avg_speed_mph`, `rolling_30day_total_distance` - Trip behavior change metrics: `change_in_distance`, `change_in_minutes`
+**Drivers Trips Information** 
 
-**Hazard Event Information for each trip** - Event-based features for each trip: - Total and type-specific event counts (e.g., `speeding`, `drowsiness`, `crash`, roughly 15+ different hazard events from Motive) - Rolling 7/15/30-day sums per event type - Speeding severity breakdowns (`low`, `mid`, `high`) and their respective rolling stats - Ratios per distance, minutes, and events to normalize behavior - Coaching and review metrics (e.g., `prev_review_rate_per_km`)
+- Includes trip frequency, average speed, distance, recency, and rolling trip stats: - `trip_date_distance`, `trip_date_minutes`, `trip_date_avg_speed_mph` 
+- Rolling features like `rolling_7trip_avg_speed_mph`, `rolling_30day_total_distance`
+- Trip behavior change metrics: `change_in_distance`, `change_in_minutes`
 
-**Vehicle Inspection per each trip date** - Inspection-based features for each vehicle-trip: - Cumulative inspection counts and issue rates - Days since last inspection - Rolling inspection/activity ratios across previous 7/15/30 trips
+**Hazard Event Information for each trip**
+
+- Event-based features for each trip: - Total and type-specific event counts (e.g., `speeding`, `drowsiness`, `crash`, roughly 15+ different hazard events from Motive) 
+- Rolling 7/15/30-day sums per event type - Speeding severity breakdowns (`low`, `mid`, `high`) and their respective rolling stats 
+- Ratios per distance, minutes, and events to normalize behavior - Coaching and review metrics (e.g., `prev_review_rate_per_km`)
+
+**Vehicle Inspection per each trip date** 
+
+- Inspection-based features for each vehicle-trip: 
+- Cumulative inspection counts and issue rates 
+- Days since last inspection 
+- Rolling inspection/activity ratios across previous 7/15/30 trips
 
 **Driver Idling Events**
 
-- Idle behavior for each trip: `idle_event_count_per_trip`, `avg_idle_duration_per_trip`, `total_idle_minutes_per_trip` - Rolling 7, 15, 30 -trip averages for idle count, duration, and minutes
+- Idle behavior for each trip: `idle_event_count_per_trip`, `avg_idle_duration_per_trip`, `total_idle_minutes_per_trip` 
+- Rolling 7, 15, 30 -trip averages for idle count, duration, and minutes
 
-**Trips and corresponding sites**: This is used to understand where would this trip dispatched from, allowing to mapped with weather data within that region - Geographic link between trips and site location: - `zipcode`, `motive_group_id` for mapping driver behavior to site-level risk
+**Trips and corresponding sites**: This is used to understand where would this trip dispatched from, allowing to mapped with weather data within that region - Geographic link between trips and site location: 
+    - `zipcode`, `motive_group_id` for mapping driver behavior to site-level risk
 
 These table are going to be joined together with following shared keys `driver_id`, `vehicle_id`, `trip_date`, and `group_id`.
 
@@ -314,10 +328,12 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
 -   We perform 4-fold stratified cross-validation for hyperparameter tuning to address class imbalance.
 -   Tuned parameters included:
     -   `numTrees`: [50, 60, ..., 120]
-    -   `maxDepth`: [5, 10, 15]
+    -   `maxDepth`: [5, 10, 15,20]
     -   `maxBins`: [32, 64]
 -   After selecting the best configuration (110 trees, depth of 5, 64 bins), we retrained the model on the full training set.
 -   Feature importance analysis revealed 26 features with zero impact; these were dropped before final training.
+-   Training the model with the best set of parameters take 1 minutes 16.46 seconds
+-   We originally trained the model without an early stop. It took us roughly 4 hours to train with same number of trees, same number of maxBins but only 3 values for max Depth (5,10, 15); with the early stopper, the run time cut down to only 1 hour. Because of that, I included an extra max depth parameter to see if the model can perform better. Because of this, from now on all of our model performance woulde derive from the model with early stopper. 
 -   The model was retrained after filtering and evaluated on a holdout set for unbiased performance assessment.
 
 #### Gradient Boosted Trees Classifier
@@ -329,79 +345,156 @@ We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees 
     -   `subsample_rate`: [0.5, 1.0]
     -   `min_instances_per_node`: [1, 20]
 
-### Multilayer Perceptron Classifier
-
-- Hyperparameter tuninf was performed using the same train/val split as above with a Grid Search 
--   Tuned parameters included:
-    -   `layers`: [54, 10, 2], [54, , 16, 8, 2]
-    -   `stepSize`: [0.001, 0.01, 0.1]
-
 <img src="assets/optimization_history.png" alt="Optimization History" width="60%"/>
 
 -  The inital 30 trials with all of the featues took 2 hr and 45 min to complete. The best AUC on the validation set was .7429 with a max_depth of 3, step_size of 0.228 subsample_rate of 0.884 and min_instances_per_node of 10. 
 -  We then took the best performing parameters and ran cross validation on the training set to get a better estimate of the model performance and make sure the best parameters were not overfitting to the validation set. This took 42 minutes. 
 - After selecting the top 5 models via stratified validation, we performed feature importance filtering, dropping 86 non-informative features.
 -   A second Optuna round refined `step_size`, `subsample_rate`, and `min_instances_per_node` within the ranges where best perfomance was observed previously, with `max_depth` fixed at 3. This sound used cross validation instead of a fixed validation set. 
-- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10.
+- The 10 additional trials took 1hr and 29 min to run. The best AUC value was 0.674 with a step_size of 0.227, subsample_rate of 0.884 and min_instances_per_node of 10. 
 -  Final model was trained using optimal hyperparameters on the full training data. This took 3 minutes. 
 - Making predictions on the test set took less than a second and evaluation with the PySpark evaluators took 45 seconds. 
 
+### Multilayer Perceptron Classifier
+
+- Hyperparameter tuning was performed using the same train/val split as above with a Grid Search 
+-   Tuned parameters included:
+    -   `layers`: [num_features, 10, 2], [num_features, 16, 8, 2]
+    -   `stepSize`: [0.001, 0.01, 0.1]
+- The initial hyperparameter tuning across these six parameter configurations took 3h 18 min. All of the cross validation AUC scores round to 0.50. We could not use a weight column and using a weighted loss function would have required a custom loss function, so the model was not able to learn anything useful. We also included a another training version with early stopper which only tooks around 1 hour 30 minutes to find the best parameters
+- Training the final model with the best set of hyperparameters took 1 minute. 
+
 ### 5. Model Performance on Train Data
 These are the results of our models given the whole train data 
-#### Random Forest 
--   **AUC**: 0.8685 
--   **AUPRC**: 0.0211 (very low)
+
+#### Random Forest
+
+-   **Inference Time**:  76.47s
+-   **AUC**: 0.8526
+-   **AUPRC**: 0.019 (very low)
 -   **Precision** (overall): 0.9977
--   **Recall** (overall): 0.8972
+-   **Recall** (overall): 0.8707
 -   **True Positive Rate (accidents only)**: 59.61%
--   **False Positive Rate**: 10.22%
--   **Positive Predictive Value (accidents only)**: 0.9%
+-   **False Positive Rate**: 12.88%
+-   **Positive Predictive Value (accidents only)**: 0.0072
 
-<img src="assets/rf_train_performance.png" alt="RF - Performance on Train Data" width="60%"/>
+<img src="assets/rf_train_performance_es.png" alt="RF - Performance on Train Data" width="60%"/>
 
-**Observations: **
-- Low Area under the PR curve: this suggests the model perform poorly at distinguishing the positive class eventhough we already include a class weight in our Random Forest Classifier. This result mean that our current training approach to class imbalanced wasn't fully address the class imbalanced issues (in this case, the model still has difficult time learning about the positive case)
+**Observations:**
+- Low Area under the PR curve: this suggests the model performed poorly in distinguishing the positive class even though we already include a class weight in our Random Forest Classifier. This result meant that our current training approach to class imbalance didn't fully address the class imbalance issues (in this case, the model still had a difficult time learning about the positive case)
 - There is a sharp drop in precision at low recall. Precision rapidly declines after a small amount of recall is achieved. This means that most of the true positives are detected only when allowing a large number of false positives.
+
+#### GBT Classifier 
+-   **AUC**: 0.91629
+-   **AUPRC**: 0.01697 (very low)
+-   **Precision** (overall): 0.99819
+-   **Recall** (overall): 0.8150
+-   **True Positive Rate (accidents only)**:  0.8615
+-   **False Positive Rate**: 18.51%
+-   **Positive Predictive Value (accidents only)**: .00072
+
+<img src="assets/gbt_train_performance.png" alt="GBT - Performance on Training Data" width="60%"/>
+
+#### MLP Classifier 
+
+**Without Early Stopping**
+-   **AUC**: 0.9097
+-   **AUPRC**: 0.1919
+-   **Precision** 0.9988
+-   **Recall** 0.99880
+-   **True Positive Rate (accidents only)**: 0.2346
+-   **False Positive Rate**: 0.0000
+-   **Positive Predictive Value (accidents only)**: 1.0000
+
+
+**With Early Stopping**
+-   **AUC**: 0.830
+-   **AUPRC**: 0.0491
+-   **Precision**: 0.9980
+-   **Recall**: 0.9985
+-   **True Positive Rate (accidents only)**: 0.0615
+-   **False Positive Rate**: 4.196
+-   **Positive Predictive Value (accidents only)**:  0.6956
+
+<img src="assets/mlp_train_performance_es.png" alt="MLP - Training Data (no early stopping)" width="60%"/>
+
 
 ### 6. Model Performance on Test Data
 
 #### Random Forest
 
--   **AUC**: 0.5698 (barely above random)
--   **AUPRC**: 0.00298 (very low)
--   **Precision** (overall): 0.9953
--   **Recall** (overall): 0.8708
--   **True Positive Rate (accidents only)**: 17.59%
--   **False Positive Rate**: 12.75%
--   **Positive Predictive Value (accidents only)**: 0.32%
+-   **Inference Time**:  0.29
+-   **AUC**: 0.5826 (barely above random)
+-   **AUPRC**: 0.0031 (very low)
+-   **Precision** (overall): 0.9954
+-   **Recall** (overall): 0.8050
+-   **True Positive Rate (accidents only)**: 26.85%
+-   **False Positive Rate**: 19.4%
+-   **Positive Predictive Value (accidents only)**: 0.33%
+
 
 **Observation:**
 - The PR curve is nearly flat at the bottom, and the area under the curve is close to zero. This confirms that the model is not effective at identifying the positive class — precision remains very low across all recall levels
-- Out of 108 actual positive cases, the model correctly predicted only 19, while 89 were missed (false negatives). The recall (sensitivity) is extremely low, suggesting the model fails to detect most positive instances. At the same time, 5,759 false positives indicate that increasing sensitivity would likely worsen precision even further.
-
+- Out of 108 actual positive cases, the model correctly predicted only 29, while 79 were missed (false negatives). The recall (sensitivity) is extremely low, suggesting the model fails to detect most positive instances. At the same time, 5,759 false positives indicate that increasing sensitivity would likely worsen precision even further.
+- In RF, the model performance using early stopper show significant performance in time training. Cutting down the time by half comparing with training the entire pipeline 
 
 > Despite strong overall precision and recall (due to class imbalance), the model struggles to identify true accidents. Only 0.32% of flagged accidents are correct.
 
-<img src="assets/rf_test_performance.png" alt="RF - Performance on Test Data" width="60%"/>
+<img src="assets/rf_test_performance_es.png" alt="RF - Performance on Test Data" width="60%"/>
 
 #### Gradient Boosted Trees
 
+-   **Inference Time**:
 -   **AUC**:  0.571
 -   **AUPRC**: 0.00293
 -   **Precision** (overall): 0.9953
 -   **Recall** (overall): 0.7623
+-   **True Positive Rate (accidents only)**: 0.2778
 -   **F1 Score**: 0.8629
 -   **False Positive Rate**:  23.65%
--   **Positive Predictive Value (accidents only)**: 0.27%
+-   **True positive rate (accidents only)**: 0.0030
 
-> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.27% of predicted accidents are correct, indicating many false alarms.
 
-The AUC on the test set was much higher than what we expected from cross-validation. We think this could be due to two reasons. 
+> The GBT model achieves a decently high F1 but suffers from an extremely low positive predictive value. Only 0.30% of predicted accidents are correct, indicating many false alarms. Compared to the performance on the training set, we observe a very large decrease in model performance, indicating that there was overfitting during training which lead to overly optimistic performance estimates. 
+
+<img src="assets/gbt_test_performance.png" alt="GBT - Performance on Test Data" width="60%"/>
+
+#### Multi Layer Perception Classifier
+
+**Without Early Stopping**
+-   **AUC**: 0.90972
+-   **AUPRC**: 0.002427
+-   **Precision** 0.9988
+-   **Recall** 0.99748
+-   **True Positive Rate (accidents only)**: 0.0000
+-   **False Positive Rate**:  0.0001
+-   **Positive Predictive Value (accidents only)**: 0.0000
+
+
+
+**With Early Stopping**
+-   **Inference Time**:
+-   **AUC**: 0.4563
+-   **AUPRC**: 0.0024
+-   **Precision**  0.9952
+-   **Recall** 0.9975
+-   **True Positive Rate (accidents only)**: 0
+-   **False Positive Rate**: 4.42e^-5
+-   **Positive Predictive Value (accidents only)**: 0
+
+<img src="assets/mlp_test_performance_es.png" alt="MLP - Performance on Test Data (no early stopping)" width="60%"/>
+
+
+**Observation**: 
+- The model appears to classify nearly everything as negative and completely misses the positive class (0 true positives).
+- This model yields a very low true‐positive rate and a PR‐AUC of only 0.002, indicating poor performance on the minority class.
+- Although precision and recall look high for the negative class, the overall ROC curve has an AUC of 0.456, which is close to random performance.
+- The confusion matrix confirms a severe imbalance where 108 out of 108 positives are misclassified, suggesting the model is not recognizing positives at all.
 
 ### 6. Key takeaways
 
 -   Both models surfaced meaningful features, including prior accidents, safety events, inspection history, and driving tenure.
--  External data (precipitation, crash statistics) was less informative than internal data. 
+-   External data (precipitation, crash statistics) was less informative than internal data. 
 -   GBT slightly outperformed RF in terms of AUC but still lacked precision on accident prediction due to data imbalance.
 -   The quality of the prediction is ultimately limited by data quality: missing values, inconsistent adoption of Motive, and unreliable accident records.
 -   Future modeling should focus on improving data coverage, especially around route information, accident validation, and consistent sensor usage.
@@ -409,11 +502,12 @@ The AUC on the test set was much higher than what we expected from cross-validat
     -   `vehicle_cum_issues`: History of vehicle issues is a strong predictor of accident risk.
     -   `rolling_15trip_avg_speed_mph`: Consistent high speeds over recent trips are associated with higher risk.
     -   `rolling_15day_total_distance`: Recent driving intensity plays a significant role in crash likelihood.
-    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure. _ Additional insights from feature importance analysis
-    -   Long-term driving patterns are more predictive than single-trip behavior.
-    -   GBT emphasized distraction-related events (e.g., cell phone use, drowsiness), while RF relied more on historical ratios and accident history.
-    -   Speed-related features were important when considered over time, rather than as isolated events.
-    -   Vehicle condition and maintenance history should be monitored closely for risk management.
+    -   `prev_trip_date_distance`: Distance from the previous trip may indicate driver fatigue or exposure.
+    -   Additional insights from feature importance analysis
+        -   Long-term driving patterns are more predictive than single-trip behavior.
+        -   GBT emphasized distraction-related events (e.g., cell phone use, drowsiness), while RF relied more on historical ratios and accident history.
+        -   Speed-related features were important when considered over time, rather than as isolated events.
+        -   Vehicle condition and maintenance history should be monitored closely for risk management.
 
 * A more practical short-term solution could be deploying a **dashboard** highlighting high-risk behaviors (e.g., speeding, harsh braking, overdue inspections) rather than deploying a low-confidence predictive model.
 
@@ -431,7 +525,7 @@ Despite our efforts to engineer meaningful features and train predictive models,
     Due to the login inconsistencies, many driver IDs lacked basic demographic information such as age or employment start date. As a result, we excluded these fields from our feature set and used each driver’s first recorded trip date as a proxy for driving tenure.
 
 -   **Limited inspection data quality**
-    While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only include the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
+    While inspections are required at the start of a shift, it's unclear whether drivers genuinely completed them or simply rushed through. The inspection data only included the inspection date but not timestamp data or duration or completion detail. This made it impossible to assess inspection thoroughness or detect potentially falsified entries.
 
 -   **Lack of trip-level location granularity**
     We did not have access to start and end coordinates for individual trips. This limited our ability to match each trip precisely to weather conditions. Since weather can vary significantly even within the same city, we worked around this limitation by aggregating precipitation data within a 40-mile radius of the driver’s service site.
