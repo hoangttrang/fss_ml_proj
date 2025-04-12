@@ -319,7 +319,7 @@ The split above will ensure a rough 80-20 split between train and test sets.
 
 ### 4. Model Training
 
-We trained two classifiers: **Random Forest (RF)** and **Gradient Boosted Trees (GBT)**, each with their own tuning and evaluation pipelines.
+We trained three classifiers: **Random Forest (RF)**, **Gradient Boosted Trees (GBT)**, and **Multilayer Perceptron Classifier** each with their own tuning and evaluation pipelines.
 
 <img src="assets/hyperparameter_tuning.jpg" alt="Hyperparameter_tuning" width="100%"/>
 
